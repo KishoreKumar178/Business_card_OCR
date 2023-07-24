@@ -1,0 +1,6 @@
+streamlit
+pillow
+easyocr
+numpy
+mysql-connector-python
+pandas
