@@ -1,15 +1,21 @@
 import streamlit as st
 import easyocr
-import sqlite3
+import pymysql
 from PIL import Image
 
-# Connect to the SQLite database
-conn = sqlite3.connect('business_cards.db')
-c = conn.cursor()
+#Connect to the SQLite database
+conn = pymysql.connect(
+        host='localhost',
+        user='root', 
+        password = "kishore123",
+        db='businesscard'
+        )
+      
+cur = conn.cursor()
 
 # Create a table to store business card information
-c.execute('''CREATE TABLE IF NOT EXISTS business_cards
-             (id INTEGER PRIMARY KEY AUTOINCREMENT,
+"""cur.execute('''CREATE TABLE business_cards
+             id INT PRIMARY KEY AUTOINCREMENT,
               image BLOB,
               company_name TEXT,
               card_holder_name TEXT,
@@ -20,31 +26,13 @@ c.execute('''CREATE TABLE IF NOT EXISTS business_cards
               area TEXT,
               city TEXT,
               state TEXT,
-              pin_code TEXT)''')
+              pin_code TEXT''')"""
 conn.commit()
 
 # Initialize the easyOCR reader
 reader = easyocr.Reader(['en'])
 
-# Streamlit application UI
-def main():
-    st.title('Business Card Extractor')
-    st.write('Upload a business card image to extract information')
 
-    # File uploader widget
-    uploaded_file = st.file_uploader('Upload Image', type=['png', 'jpg', 'jpeg'])
-
-    if uploaded_file is not None:
-        # Display the uploaded image
-        image = Image.open(uploaded_file)
-        st.image(image, caption='Uploaded Image', use_column_width=True)
-
-        # Extract information from the image using OCR
-        extracted_info = extract_information(image)
-        display_extracted_info(extracted_info)
-
-        # Save the extracted information and image to the database
-        save_to_database(uploaded_file, extracted_info)
 
 # Function to extract information from the uploaded image using OCR
 def extract_information(image):
@@ -89,7 +77,7 @@ def save_to_database(image, extracted_info):
     image_bytes = image.read()
 
     # Insert data into the database
-    c.execute('''INSERT INTO business_cards
+    cur.execute('''INSERT INTO business_cards
                  (image, company_name, card_holder_name, designation, mobile_number, email_address,
                   website_url, area, city, state, pin_code)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
@@ -100,5 +88,21 @@ def save_to_database(image, extracted_info):
     conn.commit()
     st.success('Data saved successfully!')
 
-if __name__ == '__main__':
-    main()
+# Streamlit application UI
+st.title('Business Card Extractor')
+st.write('Upload a business card image to extract information')
+
+    # File uploader widget
+uploaded_file = st.file_uploader('Upload Image', type=['png', 'jpg', 'jpeg'])
+
+if uploaded_file is not None:
+    # Display the uploaded image
+    image = Image.open(uploaded_file)
+    st.image(image, caption='Uploaded Image', use_column_width=True)
+
+    # Extract information from the image using OCR
+    extracted_info = extract_information(image)
+    display_extracted_info(extracted_info)
+
+    # Save the extracted information and image to the database
+    save_to_database(uploaded_file, extracted_info)
